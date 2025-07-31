@@ -34,6 +34,7 @@ const userSchema = new Schema(
     deletedAt: {
       type: Date,
     },
+    point: Number
   },
   {
     timestamps: true,
