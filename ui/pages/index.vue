@@ -6,7 +6,7 @@
             <v-row align="center" justify="center" class="fill-height pa-8">
               <v-spacer/>
                 <h1 class="mx-3">20 Days</h1>
-                <v-btn rounded x-large @click="" color="indigo" class="white--text text-h5">Check!</v-btn>
+                <v-btn rounded x-large @click="recordPoint" color="indigo" class="white--text text-h5">Check!</v-btn>
             </v-row>
           </v-card>
         </v-col>
@@ -87,7 +87,7 @@ export default {
   },
   data() {
     return {
-
+      isRecordLoading: false
     };
   },
 
@@ -123,6 +123,16 @@ export default {
   methods: {
     onPageChange(p) {
       this.$router.push({ query: { ...this.$route.query, page: p, limit: this.limit } });
+    },
+
+    async recordPoint() {
+      if(this.isRecordLoading) return
+      this.isRecordLoading = true
+
+      const response = await this.$axios.post('/point').catch(err=>{console.log(err)})
+      console.log('record', response)
+
+      this.isRecordLoading = false
     }
   }
 

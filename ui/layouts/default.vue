@@ -103,6 +103,10 @@ export default {
   },
   mounted() {
       const token = localStorage.getItem('accessToken')
+
+      if (token) {
+        this.$axios.setToken(token, 'Bearer');
+      }
       if (token && !this.$store.state.auth.user) {
         this.$axios
           .$get('/auth/me', {

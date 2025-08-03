@@ -9,6 +9,7 @@ const cors = require('cors');
 const indexRoutes = require('./routes/indexRoutes');
 const authRoutes = require('./routes/authRoutes');
 const rankRoutes = require('./routes/rankRoutes');
+const pointRoutes = require('./routes/pointRoutes');
 const logger = require('./middlewares/logger');
 const socket = require('./socket.js')
 const isDev = process.env.NODE_ENV !== 'production'
@@ -24,6 +25,7 @@ app.use(cors());
 app.use('/', indexRoutes);
 app.use('/auth', authRoutes);
 app.use('/rank', rankRoutes)
+app.use('/point', pointRoutes)
 
 // Nuxt SSR 통합
 async function start() {

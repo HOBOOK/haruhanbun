@@ -34,11 +34,17 @@ const userSchema = new Schema(
     deletedAt: {
       type: Date,
     },
-    point: Number
+    point: {
+      type: Number,
+      default:0
+    },
+    lastClickTime: {
+      type: Number
+    }
   },
   {
     timestamps: true,
   }
 );
 
-module.exports = mongoose.model("user", userSchema);
+module.exports = mongoose.model("User", userSchema);
