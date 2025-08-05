@@ -12,9 +12,9 @@
         <div style="min-height:400px;">
 
 
-          <v-btn class="mb-16" outlined block height="50" @click="loginWith('google')">
-            <img src="/icons/google.png" alt="google" width="16" height="16" class="mr-2" />
-            구글 계정으로 계속하기
+          <v-btn class="mb-16" block height="50" @click="loginWith('google')">
+            <img src="/icons/google.png" alt="google" width="18" height="18" class="mr-2" />
+              구글 계정으로 계속하기
           </v-btn>
         </div>
 

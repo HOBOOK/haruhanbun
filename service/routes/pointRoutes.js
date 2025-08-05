@@ -5,5 +5,6 @@ const authenticate = require('../middlewares/auth.middleware');
 
 // GET /hello/
 router.post('/', authenticate, controller.record);
+router.get('/users/:userId', authenticate, controller.read);
 
 module.exports = router;

@@ -1,23 +1,24 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const userPointSchema = new Schema(
+const userPointHistorySchema = new Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
-    totalPoint: {
+    order: {
       type: Number,
       default:0
     },
-    lastRecordPoint:{
+    point: {
       type: Number,
       default:0
     },
-    lastClickTime: {
-      type: Number
-    },
-    totalCount:{
+    prevPoint: {
       type: Number,
       default:0
+    },
+    savePoint: {
+      type: Number,
+      default: 0
     }
   },
   {
@@ -25,4 +26,4 @@ const userPointSchema = new Schema(
   }
 );
 
-module.exports = mongoose.model("UserPoint", userPointSchema);
+module.exports = mongoose.model("UserPointHistory", userPointHistorySchema);

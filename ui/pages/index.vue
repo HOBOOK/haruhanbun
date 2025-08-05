@@ -5,7 +5,8 @@
           <v-card width="100%" height="240" color="#70707010">
             <v-row align="center" justify="center" class="fill-height pa-8">
               <v-spacer/>
-                <h1 class="mx-3">20 Days</h1>
+                <h1 class="mx-3">{{ $store.state.auth?.user?.name }}</h1>
+                {{ $store.state.auth?.user?.lastClickTime }}
                 <v-btn rounded x-large @click="recordPoint" color="indigo" class="white--text text-h5">Check!</v-btn>
             </v-row>
           </v-card>
@@ -58,7 +59,9 @@
             <v-card>
               <v-row no-gutters align="center" class="pa-6 text-h6">
                 내 포인트
-              </v-row>              
+              </v-row>     
+              
+              {{ userPointHistory }}
 
             </v-card>
           </v-card>
@@ -78,32 +81,38 @@ export default {
     MultipaneResizer,
 
   },
-    watch: {
+  watch: {
     // 쿼리 변경 시 클라이언트 내비게이션에서도 SSR 재호출됨
     '$route.query': {
       immediate: false,
       handler() { this.loading = true; }
-    }
+    },
+
   },
   data() {
     return {
-      isRecordLoading: false
+      isRecordLoading: false,
+      userPointHistory:[]
     };
   },
 
-  async asyncData({ $axios, query, error, $socket }) {
+  async asyncData({ $axios, query, error, $socket, store }) {
+    
     const limit = Math.min(parseInt(query.limit, 10) || 20, 100);
     const page  = Math.max(parseInt(query.page, 10) || 1, 1);
 
     try {
       const data = await $axios.$get('/rank', { params: { limit, page } });
+
+      
       return {
         users: data.users,
         total: data.total,
         totalPages: data.totalPages,
         page: data.page,
         limit,
-        loading: false
+        loading: false,
+        
       };
     } catch (e) {
       error({ statusCode: 500, message: '사용자 목록을 불러오지 못했습니다.' });
@@ -115,12 +124,23 @@ export default {
       ...u,
       rank: (this.page - 1) * this.limit + (i + 1)
     }));
+    
+    this.init()
     this.loading = false;
 
   },
 
 
   methods: {
+    init() {
+      if(this.$store.state.auth) {
+        this.$axios.get('/point/users/' + this.$store.state.auth.user._id).then(res=>{
+            this.userPointHistory = res?.data || [] 
+        })
+      }
+ 
+    },
+
     onPageChange(p) {
       this.$router.push({ query: { ...this.$route.query, page: p, limit: this.limit } });
     },
@@ -130,8 +150,6 @@ export default {
       this.isRecordLoading = true
 
       const response = await this.$axios.post('/point').catch(err=>{console.log(err)})
-      console.log('record', response)
-
       this.isRecordLoading = false
     }
   }

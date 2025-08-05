@@ -1,4 +1,5 @@
 const UserPoint = require('../models/UserPoint')
+const UserPointHistory = require('../models/UserPointHistory')
 const User = require('../models/User')
 
 function calculateDailyPoint(lastClickTime, currentTime) {
@@ -34,10 +35,19 @@ exports.record = async (req, res, next) => {
       userId,
       lastClickTime: now,
       totalPoint: 100,
-      lastRecordPoint: 100
+      lastRecordPoint: 100,
+      totalCount: 1
     });
     await user.save();
-    return res.json({ message: '첫 클릭 성공', point: 100, totalPoint: 100 });
+
+    await UserPointHistory.create({
+      userId,
+      point: 100,
+      savePoint: 100,
+      prevPoint: 0,
+      order: 1
+    });
+    return res.json({ message: '첫 클릭 성공', point: 100, totalPoint: 100, totalCount: 1 });
   }
 
   const DAY_MS = 24 * 60 * 60 * 1000;
@@ -49,14 +59,38 @@ exports.record = async (req, res, next) => {
   }
 
   const point = calculateDailyPoint(user.lastClickTime, now);
+
+  await UserPointHistory.create({
+    userId,
+    point: point,
+    savePoint: user.totalPoint + point,
+    prevPoint: user.totalPoint,
+    order: user.totalCount + 1
+  });
+
+
   user.totalPoint += point;
+  user.totalCount += 1
   user.lastRecordPoint = point;
   user.lastClickTime = now;
   await user.save();
 
+
   res.json({
     message: '클릭 성공',
     point,
-    totalPoint: user.totalPoint
+    totalPoint: user.totalPoint,
+    totalCount: user.totalCount
   });
+}
+
+exports.read = async (req, res, next) => {
+  try {
+    const userPoints = await UserPointHistory.find({
+      userId: req.params.userId
+    })
+    res.json(userPoints)
+  } catch (err) {
+    res.status(500).json({ message: err?.message })
+  }
 }

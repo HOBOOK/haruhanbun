@@ -1,6 +1,7 @@
 const { OAuth2Client } = require('google-auth-library')
 const jwt = require('jsonwebtoken')
 const User = require('../models/User')
+const UserPoint = require('../models/UserPoint')
 const express = require('express');
 const router = express.Router();
 
@@ -17,7 +18,7 @@ router.post('/google', async (req, res) => {
       audience: CLIENT_ID
     })
     const payload = ticket.getPayload()
-    const { email, name, picture } = payload 
+    const { email, name, picture } = payload
 
     // 2. 사용자 DB 확인
     let user = await User.findOne({ email })
@@ -32,6 +33,8 @@ router.post('/google', async (req, res) => {
       })
     }
 
+    const userPoint = await UserPoint.findOne({ userId: user._id }).lean();
+
     // 4. JWT 발급
     const jwtToken = jwt.sign(
       { id: user._id, email: user.email },
@@ -39,7 +42,16 @@ router.post('/google', async (req, res) => {
       { expiresIn: '7d' }
     )
 
-    res.json({ token: jwtToken, user })
+    res.json({
+      token: jwtToken,
+      user: {
+        ...user.toObject(),
+        totalPoint: userPoint?.totalPoint || 0,
+        totalCount: userPoint?.totalCount || 0,
+        lastClickTime: userPoint?.lastClickTime || 0,
+        lastRecordPoint: userPoint?.lastRecordPoint || 0
+      }
+    })
   } catch (err) {
     console.error(err)
     res.status(401).json({ error: 'Invalid Google token' })
@@ -51,7 +63,7 @@ router.get('/me', async (req, res) => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET)
     console.log(decoded)
-    const user = await User.find({email: decoded.email})
+    const user = await User.find({ email: decoded.email })
     res.json(user)
   } catch (err) {
     res.status(401).json({ message: 'Unauthorized' })
