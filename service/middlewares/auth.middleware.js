@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'haha'
+const ACCESS_SECRET = process.env.ACCESS_SECRET || 'haha-access-secret'
 
 function authenticate(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -10,11 +10,12 @@ function authenticate(req, res, next) {
   }
 
   try {
-    const payload = jwt.verify(token, JWT_SECRET);
+    const payload = jwt.verify(token, ACCESS_SECRET);
     req.user = { id: payload.id }; // 사용자 정보 주입
     next();
   } catch (err) {
-    return res.status(403).json({ message: '유효하지 않은 토큰입니다.' });
+    // ❗ 만료/위조된 토큰 → 401로 통일
+    return res.status(401).json({ message: '토큰이 유효하지 않거나 만료되었습니다.' });
   }
 }
 

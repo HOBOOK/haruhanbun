@@ -6,6 +6,7 @@ const http = require('http');
 const app = express();
 const config = require('./config/config');
 const cors = require('cors');
+const cookieParser = require('cookie-parser')
 const indexRoutes = require('./routes/indexRoutes');
 const authRoutes = require('./routes/authRoutes');
 const rankRoutes = require('./routes/rankRoutes');
@@ -13,15 +14,34 @@ const pointRoutes = require('./routes/pointRoutes');
 const logger = require('./middlewares/logger');
 const socket = require('./socket.js')
 const isDev = process.env.NODE_ENV !== 'production'
+
 require("./config/mongoose");
 
 const server = http.createServer(app);
 app.io = socket
 app.io.attach(server)
 
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://haruhanbun.com',
+  'https://www.haruhanbun.com',
+  'https://admin.haruhanbun.com'
+]
+
 app.use(express.json());
 app.use(logger); // 미들웨어 등록
-app.use(cors());
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true)
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
+  credentials: true
+}))
+app.use(cookieParser())
 app.use('/', indexRoutes);
 app.use('/auth', authRoutes);
 app.use('/rank', rankRoutes)
@@ -31,7 +51,7 @@ app.use('/point', pointRoutes)
 async function start() {
   console.log('NUXT rootDir =', path.resolve(__dirname, '../ui'))
 
-  const nuxt = await loadNuxt( {
+  const nuxt = await loadNuxt({
     for: isDev ? 'dev' : 'start',
     rootDir: path.resolve(__dirname, '../ui')  // ← 디렉토리 정확히 명시
   })

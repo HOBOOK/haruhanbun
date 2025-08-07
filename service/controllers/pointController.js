@@ -50,13 +50,24 @@ exports.record = async (req, res, next) => {
     return res.json({ message: '첫 클릭 성공', point: 100, totalPoint: 100, totalCount: 1 });
   }
 
-  const DAY_MS = 24 * 60 * 60 * 1000;
-  const nextAllowedTime = user.lastClickTime + DAY_MS;
+  // const DAY_MS = 24 * 60 * 60 * 1000;
+  // const nextAllowedTime = user.lastClickTime + DAY_MS;
 
-  if (now < nextAllowedTime) {
-    const remaining = nextAllowedTime - now;
-    return res.status(429).json({ message: `아직 ${Math.ceil(remaining / 60000)}분 남았습니다.` });
+  // if (now < nextAllowedTime) {
+  //   const remaining = nextAllowedTime - now;
+  //   return res.status(429).json({ message: `아직 ${Math.ceil(remaining / 60000)}분 남았습니다.` });
+  // }
+
+  const lastClickDate = new Date(user.lastClickTime);
+  const currentDate = new Date(now);
+
+  const lastClickDayStr = lastClickDate.toISOString().split('T')[0];
+  const currentDayStr = currentDate.toISOString().split('T')[0];
+
+  if (lastClickDayStr === currentDayStr) {
+    return res.status(429).json({ message: '오늘은 이미 클릭했습니다.' });
   }
+
 
   const point = calculateDailyPoint(user.lastClickTime, now);
 

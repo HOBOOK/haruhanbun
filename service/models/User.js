@@ -40,7 +40,8 @@ const userSchema = new Schema(
     },
     lastClickTime: {
       type: Number
-    }
+    },
+    refreshToken: String
   },
   {
     timestamps: true,

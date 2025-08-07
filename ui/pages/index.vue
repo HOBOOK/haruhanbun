@@ -82,7 +82,6 @@ export default {
 
   },
   watch: {
-    // 쿼리 변경 시 클라이언트 내비게이션에서도 SSR 재호출됨
     '$route.query': {
       immediate: false,
       handler() { this.loading = true; }
@@ -103,8 +102,6 @@ export default {
 
     try {
       const data = await $axios.$get('/rank', { params: { limit, page } });
-
-      
       return {
         users: data.users,
         total: data.total,
@@ -124,8 +121,23 @@ export default {
       ...u,
       rank: (this.page - 1) * this.limit + (i + 1)
     }));
+
+    console.log(this.$store.state.auth)
+
+    if (this.$store.state.auth?.user) {
+      this.init()
+    } else {
+      // 로그인 감지
+      this.$watch(
+        () => this.$store.state.auth.user,
+        (user) => {
+          if (user) {
+            this.init()
+          }
+        }
+      )
+    }
     
-    this.init()
     this.loading = false;
 
   },
@@ -133,10 +145,12 @@ export default {
 
   methods: {
     init() {
-      if(this.$store.state.auth) {
+      if(this.$store.state.auth?.user) {
         this.$axios.get('/point/users/' + this.$store.state.auth.user._id).then(res=>{
             this.userPointHistory = res?.data || [] 
         })
+      } else {
+        this.userPointHistory = []
       }
  
     },

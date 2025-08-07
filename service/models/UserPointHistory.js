@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 
 const userPointHistorySchema = new Schema(
   {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true},
     order: {
       type: Number,
       default:0

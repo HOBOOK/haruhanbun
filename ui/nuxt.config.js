@@ -169,14 +169,10 @@ export default {
     }
   },
 
-  // axios: {
-  //   baseURL: (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000'),
-  //   timeout: 10000
-  // },
-
   axios: {
     baseURL: process.server ? 'http://localhost:3000' : '/',
     timeout: 10000,
+    credentials: true
   },
   publicRuntimeConfig: {
     axios: {

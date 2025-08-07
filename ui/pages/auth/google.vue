@@ -19,11 +19,11 @@ export default {
     try {
       const response = await this.$axios.post('/auth/google', { idToken })
 
-      const { token, user } = response.data
+      const { token, refreshToken, user } = response.data
 
       localStorage.setItem('accessToken', token)
       this.$store.commit('auth/setUser', user)
-      this.$store.commit('auth/setAccessToken', user)
+      this.$store.commit('auth/setAccessToken', token)
 
       this.$router.push('/')
     } catch (e) {

@@ -94,7 +94,8 @@ export default {
   methods: {
     logout() {
       this.$store.commit('auth/logout')
-      this.$router.push('/')
+      this.$router.replace('/')
+       window.location.reload()
     }
   },
 

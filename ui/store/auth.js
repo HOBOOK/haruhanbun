@@ -16,3 +16,4 @@ export const mutations = {
         localStorage.removeItem('accessToken')
     }
 }
+
