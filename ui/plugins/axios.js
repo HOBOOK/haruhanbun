@@ -16,6 +16,12 @@ export default function ({ store, $axios, redirect, app, $storage, error }) {
         const status = error.response?.status
         const requestUrl = originalRequest?.url || ''
 
+        if (requestUrl.includes('/auth/refresh')) {
+            store.commit('auth/logout')
+            redirect('/')
+            return Promise.reject(error)
+        }
+
         // ✅ AccessToken 만료로 인한 401 처리
         if (status === 401 && !originalRequest._retry) {
             originalRequest._retry = true
