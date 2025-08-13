@@ -28,6 +28,8 @@ export default function ({ store, $axios, redirect, app, $storage, error }) {
             try {
                 const res = await $axios.$post('/auth/refresh')
                 store.commit('auth/setAccessToken', res.token)
+                $axios.setToken(res.token, 'Bearer');
+
                 originalRequest.headers.Authorization = `Bearer ${res.token}`
                 return $axios(originalRequest)
             } catch (err) {

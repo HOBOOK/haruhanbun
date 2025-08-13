@@ -163,7 +163,24 @@ export default {
       if(this.isRecordLoading) return
       this.isRecordLoading = true
 
-      const response = await this.$axios.post('/point').catch(err=>{console.log(err)})
+      let message = ''
+
+      const response = await this.$axios.post('/point').catch(err=>{
+        const responseStatus = err?.response?.status || 500
+
+        if(responseStatus == '429') {
+          message = err.response?.data?.message || '알 수 없는 오류'
+        } else if(responseStatus == '500') {
+          message = '알 수 없는 오류'
+        }
+      })
+      if(response?.data) {
+        message = '성공'
+      }
+
+      if(message) {
+        alert(message)
+      }
       this.isRecordLoading = false
     }
   }
