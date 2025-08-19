@@ -85,13 +85,6 @@ export default {
     font-family: Pretendard-Bold !important;
     margin: 0;
     padding: 0;
-    background: url('/background.jpg');
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center;
-    background-clip: text;
-    -webkit-background-clip: text;
-    filter: brightness(200%);
     color: transparent;
   }
 

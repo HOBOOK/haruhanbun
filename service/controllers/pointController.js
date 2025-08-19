@@ -97,10 +97,16 @@ exports.record = async (req, res, next) => {
 
 exports.read = async (req, res, next) => {
   try {
+     const userPoint = await UserPoint.findOne({
+      userId: req.params.userId
+    })
     const userPoints = await UserPointHistory.find({
       userId: req.params.userId
     })
-    res.json(userPoints)
+    res.json({
+      point:userPoint,
+      history: userPoints
+    })
   } catch (err) {
     res.status(500).json({ message: err?.message })
   }

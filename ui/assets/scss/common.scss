@@ -551,7 +551,7 @@ hr {
 
 .default-layout {
   .default-container {
-    max-width: 1400px;
+    max-width: 1200px;
   }
 }
 
@@ -841,6 +841,7 @@ div:hover {
 // 테이블 공통 css
 .v-data-table {
   background-color: transparent !important;
+  overflow-x: hidden !important;
 
   &.elevation-1 {
     box-shadow: none !important;
