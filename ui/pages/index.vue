@@ -3,10 +3,14 @@
     <v-row>
       <v-col cols="12">
         <v-card width="100%" height="240" color="#70707010">
-          <v-row align="center" justify="start" class="fill-height pa-8">
+          <v-row align="center" justify="start" no-gutters>
             <h1 class="mx-3">{{ $store.state.auth?.user?.name }}</h1>
             {{ userPoint?.totalPoint }}
             <v-btn rounded x-large @click="recordPoint" color="indigo" class="white--text text-h5">Check!</v-btn>
+          </v-row>
+
+          <v-row no-gutters align="center" justify="center">
+            <Heatmap :data="heatmapData"></Heatmap>
           </v-row>
         </v-card>
       </v-col>
@@ -34,7 +38,7 @@
             </v-data-table>
 
             <v-card-actions class="justify-center" v-if="totalPages > 1">
-              <v-pagination  v-model="page" :length="totalPages" @input="onPageChange" />
+              <v-pagination v-model="page" :length="totalPages" @input="onPageChange" />
             </v-card-actions>
 
 
@@ -58,13 +62,13 @@
               { text: '기록일', value: 'createdAt', sortable: false },
             ]" :items="userPointHistory" dense :items-per-page="-1" :mobile-breakpoint="0" :loading="loading"
               class="elevation-1" hide-default-footer>
-              <template v-slot:item.savePoint="{item}">
+              <template v-slot:item.savePoint="{ item }">
                 +
                 {{ item.savePoint }}
 
               </template>
 
-              <template v-slot:item.createdAt="{item}">
+              <template v-slot:item.createdAt="{ item }">
                 {{ $time.formatKoreanDate(item.createdAt) }}
 
               </template>
@@ -100,7 +104,9 @@ export default {
     return {
       isRecordLoading: false,
       userPointHistory: [],
-      userPoint: null
+      userPoint: null,
+      heatmapData: [],
+      loadingHeatmap: false
     };
   },
 
@@ -131,8 +137,6 @@ export default {
       rank: (this.page - 1) * this.limit + (i + 1)
     }));
 
-    console.log(this.$store.state.auth)
-
     if (this.$store.state.auth?.user) {
       this.init()
     } else {
@@ -147,20 +151,47 @@ export default {
       )
     }
 
+
+
     this.loading = false;
 
   },
 
 
   methods: {
-    init() {
+    async init() {
       if (this.$store.state.auth?.user) {
-        this.$axios.get('/point/users/' + this.$store.state.auth.user._id).then(res => {
+        await this.$axios.get('/point/users/' + this.$store.state.auth.user._id).then(res => {
 
           const { point, history } = res?.data
           this.userPointHistory = history || []
           this.userPoint = point
         })
+
+        this.loadingHeatmap = true
+        await this.$axios.get('/point/users/' + this.$store.state.auth.user._id + '/year').then(res => {
+
+          const rawHistory = res?.data || []
+
+          const year = new Date().getFullYear()
+          const dates = this.getYearDates(year)
+
+          rawHistory.forEach(h => {
+            const key = `${h._id.year}-${String(h._id.month).padStart(2, "0")}-${String(h._id.day).padStart(2, "0")}`
+            const target = dates.find(d => d.date === key)
+            if (target) {
+              target.value = h.count
+            }
+          })
+
+          this.heatmapData = dates
+        })
+
+        this.loadingHeatmap = false
+
+
+
+
       } else {
         this.userPointHistory = []
       }
@@ -194,7 +225,38 @@ export default {
         alert(message)
       }
       this.isRecordLoading = false
+    },
+
+    getYearDates(year) {
+      const dates = [];
+
+      // 1월 1일
+      let jan1 = new Date(year, 0, 1);
+
+      // 👉 해당 주의 월요일로 back
+      let day = jan1.getDay();      // 0=일, 1=월, ...
+      let diff = (day + 6) % 7;     // 월요일 기준
+      let current = new Date(jan1);
+      current.setDate(jan1.getDate() - diff); // e.g. 2024-12-30
+
+      // 👉 끝 = 다음 해 1월 1일 직후의 일요일까지 forward
+      let end = new Date(year + 1, 0, 1);
+      let endDay = end.getDay();
+      let forward = (7 - ((endDay + 6) % 7)) % 7;
+      end.setDate(end.getDate() + forward); // e.g. 2026-01-04 (일요일)
+
+      while (current <= end) {
+        dates.push({
+          date: current.toISOString().slice(0, 10),
+          value: 0,   // 기본값 0으로 채움
+        });
+        current.setDate(current.getDate() + 1);
+      }
+
+      return dates;
     }
+
+
   }
 
 };

@@ -1,22 +1,22 @@
-const UserPoint = require('../models/UserPoint')
-const UserPointHistory = require('../models/UserPointHistory')
-const User = require('../models/User')
+const UserPoint = require("../models/UserPoint");
+const UserPointHistory = require("../models/UserPointHistory");
+const User = require("../models/User");
+const mongoose = require("mongoose");
 
 function calculateDailyPoint(lastClickTime, currentTime) {
   const DAY_MS = 24 * 60 * 60 * 1000; // 하루 = 86400000ms
   const targetTime = lastClickTime + DAY_MS;
   const delta = Math.abs(currentTime - targetTime);
 
-  if (delta >= DAY_MS) return 1.00;
+  if (delta >= DAY_MS) return 1.0;
 
   const score = 100 - (delta / DAY_MS) * (100 - 1);
   return Math.round(score * 100) / 100; // 소수점 둘째 자리까지
 }
 
-
 exports.record = async (req, res, next) => {
   if (!req.user || !req.user.id) {
-    return res.status(401).json({ message: '인증 정보가 없습니다.' });
+    return res.status(401).json({ message: "인증 정보가 없습니다." });
   }
 
   const userId = req.user.id; // 인증 미들웨어로 사용자 ID 획득
@@ -24,7 +24,7 @@ exports.record = async (req, res, next) => {
 
   const userExists = await User.findById(userId);
   if (!userExists) {
-    return res.status(404).json({ message: '존재하지 않는 사용자입니다.' });
+    return res.status(404).json({ message: "존재하지 않는 사용자입니다." });
   }
 
   let user = await UserPoint.findOne({ userId });
@@ -36,7 +36,7 @@ exports.record = async (req, res, next) => {
       lastClickTime: now,
       totalPoint: 100,
       lastRecordPoint: 100,
-      totalCount: 1
+      totalCount: 1,
     });
     await user.save();
 
@@ -45,9 +45,14 @@ exports.record = async (req, res, next) => {
       point: 100,
       savePoint: 100,
       prevPoint: 0,
-      order: 1
+      order: 1,
     });
-    return res.json({ message: '첫 클릭 성공', point: 100, totalPoint: 100, totalCount: 1 });
+    return res.json({
+      message: "첫 클릭 성공",
+      point: 100,
+      totalPoint: 100,
+      totalCount: 1,
+    });
   }
 
   // const DAY_MS = 24 * 60 * 60 * 1000;
@@ -61,13 +66,12 @@ exports.record = async (req, res, next) => {
   const lastClickDate = new Date(user.lastClickTime);
   const currentDate = new Date(now);
 
-  const lastClickDayStr = lastClickDate.toISOString().split('T')[0];
-  const currentDayStr = currentDate.toISOString().split('T')[0];
+  const lastClickDayStr = lastClickDate.toISOString().split("T")[0];
+  const currentDayStr = currentDate.toISOString().split("T")[0];
 
   if (lastClickDayStr === currentDayStr) {
-    return res.status(429).json({ message: '오늘은 이미 클릭했습니다.' });
+    return res.status(429).json({ message: "오늘은 이미 클릭했습니다." });
   }
-
 
   const point = calculateDailyPoint(user.lastClickTime, now);
 
@@ -76,38 +80,67 @@ exports.record = async (req, res, next) => {
     point: point,
     savePoint: user.totalPoint + point,
     prevPoint: user.totalPoint,
-    order: user.totalCount + 1
+    order: user.totalCount + 1,
   });
 
-
   user.totalPoint += point;
-  user.totalCount += 1
+  user.totalCount += 1;
   user.lastRecordPoint = point;
   user.lastClickTime = now;
   await user.save();
 
-
   res.json({
-    message: '클릭 성공',
+    message: "클릭 성공",
     point,
     totalPoint: user.totalPoint,
-    totalCount: user.totalCount
+    totalCount: user.totalCount,
   });
-}
+};
 
 exports.read = async (req, res, next) => {
   try {
-     const userPoint = await UserPoint.findOne({
-      userId: req.params.userId
-    })
+    const userPoint = await UserPoint.findOne({
+      userId: req.params.userId,
+    });
     const userPoints = await UserPointHistory.find({
-      userId: req.params.userId
-    })
+      userId: req.params.userId,
+    });
     res.json({
-      point:userPoint,
-      history: userPoints
-    })
+      point: userPoint,
+      history: userPoints,
+    });
   } catch (err) {
-    res.status(500).json({ message: err?.message })
+    res.status(500).json({ message: err?.message });
   }
-}
+};
+
+exports.readThisYear = async (req, res, next) => {
+  try {
+    const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+    const endOfYear = new Date(new Date().getFullYear() + 1, 0, 1);
+
+    const history = await UserPointHistory.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startOfYear, $lt: endOfYear },
+          userId: new mongoose.Types.ObjectId(req.params.userId), // 특정 유저 기준
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+            day: { $dayOfMonth: "$createdAt" },
+          },
+          count: { $sum: 1 }, // 하루에 몇 번 기록했는지
+          totalPoint: { $sum: "$point" }, // 하루 총 포인트
+        },
+      },
+    ]);
+
+    res.json(history)
+  } catch (err) {
+    res.status(500).json({ message: err?.message });
+  }
+};
