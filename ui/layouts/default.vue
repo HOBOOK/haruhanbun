@@ -107,7 +107,10 @@ export default {
 
       if (token) {
         this.$axios.setToken(token, 'Bearer');
+      } else {
+        this.$store.commit('auth/setAccessToken', null)
       }
+
       if (token && !this.$store.state.auth.user) {
         this.$axios
           .$get('/auth/me', {

@@ -26,7 +26,7 @@
             <v-data-table :headers="[
               { text: '순위', value: 'rank', sortable: false },
               { text: '이름', value: 'name', sortable: false },
-              { text: '점수', value: 'point', sortable: false },
+              { text: '점수', value: 'point', sortable: false, align: 'right' },
               { text: '아바타', value: 'avatarUrl', sortable: false },
             ]" :items="users" :items-per-page="50" :mobile-breakpoint="0" :loading="loading" class="elevation-1"
               hide-default-footer dense>
@@ -56,17 +56,21 @@
             </v-row>
 
             <v-data-table :headers="[
-              { text: '누적점수', value: 'point', sortable: false },
-              { text: '이전점수', value: 'prevPoint', sortable: false },
-              { text: '기록점수', value: 'savePoint', sortable: false },
-              { text: '기록일', value: 'createdAt', sortable: false },
-            ]" :items="userPointHistory" dense :items-per-page="-1" :mobile-breakpoint="0" :loading="loading"
+              { text: '기록점수', value: 'point', sortable: false, align: 'right' },
+              { text: '누적점수', value: 'savePoint', sortable: false, align: 'right' },
+              { text: '기록일', value: 'createdAt', sortable: false, width:160 },
+            ]" :sort-desc="true" sort-by="createdAt" :items="userPointHistory" dense :items-per-page="-1" :mobile-breakpoint="0" :loading="loading"
               class="elevation-1" hide-default-footer>
-              <template v-slot:item.savePoint="{ item }">
+
+              <template v-slot:item.point="{ item }">
                 +
-                {{ item.savePoint }}
+                {{ item.point }}
 
               </template>
+
+              <template v-slot:item.savePoint="{item}">
+                {{ item.savePoint?.toFixed(2) }}
+              </template> 
 
               <template v-slot:item.createdAt="{ item }">
                 {{ $time.formatKoreanDate(item.createdAt) }}
@@ -203,7 +207,15 @@ export default {
     },
 
     async recordPoint() {
+      if(!this.$store.auth || !this.$store.auth?.user) {
+        this.$router.push('/login')
+        return
+      }
+
       if (this.isRecordLoading) return
+
+
+
       this.isRecordLoading = true
 
       let message = ''

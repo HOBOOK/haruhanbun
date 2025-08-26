@@ -92,4 +92,14 @@ router.get('/me', async (req, res) => {
     res.status(401).json({ message: 'Unauthorized' })
   }
 })
+
+router.post('/logout', (req, res) => {
+  res.clearCookie('refreshToken', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    path: '/auth/refresh'
+  })
+  return res.json({ message: 'Logged out' })
+})
+
 module.exports = router;

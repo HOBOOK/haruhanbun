@@ -16,7 +16,8 @@ export default function ({ store, $axios, redirect, app, $storage, error }) {
         const status = error.response?.status
         const requestUrl = originalRequest?.url || ''
 
-        if (requestUrl.includes('/auth/refresh')) {
+        if (requestUrl.includes('/auth/refresh') || !store?.state?.auth?.accessToken) {
+            await $axios.$post('/auth/logout')
             store.commit('auth/logout')
             redirect('/')
             return Promise.reject(error)
